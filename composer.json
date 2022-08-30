@@ -1,0 +1,13 @@
+{
+    "name": "gashmob/mdgen",
+    "description": "Markdown template engine",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Kevin Traini",
+            "email": "kevin@ktraini.com"
+        }
+    ],
+    "require": {}
+}
