@@ -364,7 +364,7 @@ The pre-render function will then return :
 Frequently your templates need the same base in html (same header, same footer, ...). For that you can add this statement at the beginning of your template (after the key-value)
 
 ```md
-[#]: base = someTemplate
+[#]: base someTemplate
 ```
 
 The library will then looking for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
@@ -383,7 +383,17 @@ Note that you can add this statement as much as you want, it will just include t
 
 #### Include template
 
-TODO: explain how to include another template.
+You can also include another template in your template. For that you just have to write :
+
+```md
+[#]: include someTemplate
+```
+
+It will then looking for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+
+```php
+$engine->includePath('someWhere');
+```
 
 ### Generate html 
 
