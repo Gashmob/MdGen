@@ -339,6 +339,28 @@ Some text
 
 </td>
 </tr>
+<tr>
+<td>
+
+```md
+{foo}
+```
+
+</td>
+<td>
+
+```html
+bar
+```
+
+Replace `{foo}` by the value gived at the render function :
+
+```php
+$engine->('myTemplate.mdt', [ "foo" => "bar" ])
+```
+
+</td>
+</tr>
 </table>
 
 ### Special
@@ -397,4 +419,24 @@ $engine->includePath('someWhere');
 
 ### Generate html 
 
-TODO: explain how to use library to generate html from `*.mdt`.
+Finally, there is how to use the engine to generate html document from a template file :
+
+```php
+use Gashmob\MdGen\MdGenEngine;
+
+// Create a new instance of the engine
+$engine = new MdGenEngine();
+
+// Set base and include paths
+$engine->basePath('bases/');
+$engine->includePath('includes/');
+
+// Pre-render template (this is optional)
+$array = $engine->preRender('myTemplate.mdt');
+/* Compute some values from $array */
+
+// Render template
+$html = $engine->render('myTemplate.mdt', [
+    "foo" => "bar",
+]);
+```
