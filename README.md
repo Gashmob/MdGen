@@ -343,7 +343,21 @@ Some text
 
 ### Special
 
-TODO: explain special statements for preRender and render
+But there is some another statements that can be used in your template.
+
+The first of generation is pre-rendering. During this steps the library look at the first lines for a special statement. These lines specify some values that the pre-render function should return. It will not appear in final html document. It works on a key value system :
+
+```md
+[#]: key -> value
+```
+
+The pre-render function will also return :
+
+```php
+[
+    "key" => "value",
+]
+```
 
 #### Base template
 
