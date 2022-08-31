@@ -18,7 +18,7 @@ Let see how to use MdGen :
 
 ### Templates format
 
-First, there is all the format that you can use for your template and how it will be translated to html. Essentially is markdown, but there is some difference :
+First, there is all the format that you can use for your template and how it will be translated to html. Essentially it's markdown, but there is some difference :
 
 <table>
 <tr><th>MdGen</th><th>html</th></tr>
@@ -194,6 +194,96 @@ Some text
 
 ```html
 <em>Italic</em>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
+1. First item
+2. Second item
+```
+
+</td>
+<td>
+
+```html
+<ol>
+    <li>First item</li>
+    <li>Second item</li>
+</ol>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
+- First item
+- Second item
+```
+
+</td>
+<td>
+
+```html
+<ul>
+    <li>First item</li>
+    <li>Second item</li>
+</ul>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
+---
+```
+
+</td>
+<td>
+
+```html
+<hr/>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
+`code`
+```
+
+</td>
+<td>
+
+```html
+<code>code</code>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
+> quote
+```
+
+</td>
+<td>
+
+```html
+<blockquote>
+    quote
+</blockquote>
 ```
 
 </td>
