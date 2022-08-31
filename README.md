@@ -351,7 +351,7 @@ The first of generation is pre-rendering. During this steps the library look at 
 [#]: key -> value
 ```
 
-The pre-render function will also return :
+The pre-render function will then return :
 
 ```php
 [
@@ -361,7 +361,25 @@ The pre-render function will also return :
 
 #### Base template
 
-TODO: explain how to use base template.
+Frequently your templates need the same base in html (same header, same footer, ...). For that you can add this statement at the beginning of your template (after the key-value)
+
+```md
+[#]: base = someTemplate
+```
+
+The library will then looking for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+
+```php
+$engine->basePath('someWhere/');
+```
+
+In the file `someTemplate.mdt` you can write all you want. You just need to add the statement below to indicate where to include the calling template.
+
+```md
+[#]: baseInclude
+```
+
+Note that you can add this statement as much as you want, it will just include the html at each place.
 
 #### Include template
 
