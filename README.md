@@ -11,6 +11,7 @@ Markdown template engine. This php library will generate html from markdown temp
     - [Base template](#base-template)
     - [Include template](#include-template)
   - [Generate html](#generate-html)
+- [Installation](#installation)
 
 ## Usage
 
@@ -439,4 +440,12 @@ $array = $engine->preRender('myTemplate.mdt');
 $html = $engine->render('myTemplate.mdt', [
     "foo" => "bar",
 ]);
+```
+
+## Installation
+
+The easiest way to use this library is to pass from composer with :
+
+```console
+composer require gashmob/mdgen
 ```
