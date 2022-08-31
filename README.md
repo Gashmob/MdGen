@@ -14,7 +14,7 @@ Markdown template engine. This php library will generate html from markdown temp
 
 ## Usage
 
-Let see how to use MdGen :
+Let see how to use MdGen. If you want some examples, you can go inside test dir, there is the template with the html result.
 
 ### Templates format
 
