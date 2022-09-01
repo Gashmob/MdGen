@@ -11,6 +11,7 @@ final class EngineState
     const TABLE = 4;
     const HTML = 5;
     const TITLE = 6;
+    const BOLD = 7;
 
     private function __construct()
     {

@@ -36,6 +36,8 @@ class MdParser
         "/^!\[(.*?)]\((.*?)\)$/";
     const LINK = /** @lang PhpRegExp */
         "/^\[(.*?)]\((.*?)\)$/";
+    const BOLD = /** @lang PhpRegExp */
+        "/^\*\*(.*?)\*\*$/";
 
     public function parse()
     {
@@ -66,6 +68,14 @@ class MdParser
         } // Link
         else if (preg_match(self::LINK, $line, $matches)) {
             $this->writer->writeIndent("<a href=\"$matches[2]\">$matches[1]</a>\n");
+        } // Bold
+        else if (preg_match(self::BOLD, $line, $matches)) {
+            $this->writer->writeIndent("<strong>\n");
+            $this->writer->indent();
+            $this->state = EngineState::BOLD;
+            $this->parseLine($matches[1]);
+            $this->writer->unindent();
+            $this->writer->writeIndent("</strong>\n");
         } // Text
         else if ($line !== '') {
             if ($this->state == EngineState::STATE_INIT) {

@@ -368,7 +368,7 @@ $engine->('myTemplate.mdt', [ "foo" => "bar" ])
 
 But there is some another statements that can be used in your template.
 
-The first of generation is pre-rendering. During this steps the library look at the first lines for a special statement. These lines specify some values that the pre-render function should return. It will not appear in final html document. It works on a key value system :
+The first of generation is pre-rendering. During these steps the library look at the first lines for a special statement. These lines specify some values that the pre-render function should return. It will not appear in final html document. It works on a key value system :
 
 ```md
 [#]: key -> value
@@ -390,7 +390,7 @@ Frequently your templates need the same base in html (same header, same footer, 
 [#]: base someTemplate
 ```
 
-The library will then looking for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+The library will then look for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
 
 ```php
 $engine->basePath('someWhere/');
@@ -412,7 +412,7 @@ You can also include another template in your template. For that you just have t
 [#]: include someTemplate
 ```
 
-It will then looking for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+It will then look for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
 
 ```php
 $engine->includePath('someWhere');
