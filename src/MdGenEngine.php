@@ -27,7 +27,7 @@ class MdGenEngine
         $result = [];
 
         /** @lang PhpRegExp */
-        $regex = "/^\[#]: (.*?) -> (.*?)$/";
+        $regex = "/^\[#]: *(.*?) *-> *(.*?)$/"; // Match on [#]: <key> -> <value>
         foreach ($lines as $line) {
             $matches = [];
             if (preg_match($regex, $line, $matches)) {
