@@ -15,7 +15,7 @@ $passed = 0;
 foreach ($dirs as $dir) {
     $dirname = basename($dir);
     echo 'Testing ' . $dirname . ' ';
-    $file = $dir . '/' . $dirname . '.md';
+    $file = $dir . '/' . $dirname . '.mdt';
 
     try {
         $html = $engine->render($file);
