@@ -61,6 +61,8 @@ class MdGenEngine
         // Regex
         $title = /** @lang PhpRegExp */
             "/^(#+) *(.*)$/";
+        $image = /** @lang PhpRegExp */
+            "/^!\[(.*?)]\((.*?)\)$/";
 
         $state = EngineState::$STATE_INIT;
         foreach ($lines as $line) {
@@ -70,6 +72,9 @@ class MdGenEngine
             if (preg_match($title, $line, $matches)) {
                 $level = min(strlen($matches[1]), 6);
                 $writer->writeIndent("<h$level>$matches[2]</h$level>\n");
+            } // Images
+            else if (preg_match($image, $line, $matches)) {
+                $writer->writeIndent("<img src=\"$matches[2]\" alt=\"$matches[1]\"/>\n");
             }
         }
 
