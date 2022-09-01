@@ -63,6 +63,8 @@ class MdGenEngine
             "/^(#+) *(.*)$/";
         $image = /** @lang PhpRegExp */
             "/^!\[(.*?)]\((.*?)\)$/";
+        $link = /** @lang PhpRegExp */
+            "/^\[(.*?)]\((.*?)\)$/";
 
         $state = EngineState::$STATE_INIT;
         foreach ($lines as $line) {
@@ -75,6 +77,9 @@ class MdGenEngine
             } // Images
             else if (preg_match($image, $line, $matches)) {
                 $writer->writeIndent("<img src=\"$matches[2]\" alt=\"$matches[1]\"/>\n");
+            } // Link
+            else if (preg_match($link, $line, $matches)) {
+                $writer->writeIndent("<a href=\"$matches[2]\">$matches[1]</a>\n");
             }
         }
 
