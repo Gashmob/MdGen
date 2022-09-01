@@ -22,12 +22,12 @@ class IndentWriter
     /**
      * @var string The string used to indent.
      */
-    public $indentChar = "\t";
+    public $indentChar;
 
     /**
      * @param string $indentChar
      */
-    public function __construct($indentChar)
+    public function __construct($indentChar = "\t")
     {
         $this->indentChar = $indentChar;
     }

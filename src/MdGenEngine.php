@@ -26,8 +26,8 @@ class MdGenEngine
 
         $result = [];
 
-        /** @lang PhpRegExp */
-        $regex = "/^\[#]: *(.*?) *-> *(.*?)$/"; // Match on [#]: <key> -> <value>
+        $regex = /** @lang PhpRegExp */
+            "/^\[#]: *(.*?) *-> *(.*?)$/"; // Match on [#]: <key> -> <value>
         foreach ($lines as $line) {
             $matches = [];
             if (preg_match($regex, $line, $matches)) {
@@ -45,9 +45,34 @@ class MdGenEngine
      *
      * @param $filename string The path to the template file
      * @return string The html corresponding to the template
+     * @throws FileNotFoundException
      */
     public function render($filename)
     {
-        return "";
+        if (!file_exists($filename)) {
+            throw new FileNotFoundException($filename);
+        }
+
+        $writer = new IndentWriter();
+
+        $content = file_get_contents($filename);
+        $lines = explode("\n", $content);
+
+        // Regex
+        $title = /** @lang PhpRegExp */
+            "/^(#+) *(.*)$/";
+
+        $state = EngineState::$STATE_INIT;
+        foreach ($lines as $line) {
+            $matches = [];
+
+            // Titles
+            if (preg_match($title, $line, $matches)) {
+                $level = min(strlen($matches[1]), 6);
+                $writer->writeIndent("<h$level>$matches[2]</h$level>\n");
+            }
+        }
+
+        return $writer->getBuffer();
     }
 }

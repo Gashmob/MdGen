@@ -5,5 +5,3 @@
 - [x] Implement preRender function
 - [ ] Implement the switch for each statement
 - [x] Create IndentWriter class
-- [ ] Create classes for each statement
-
