@@ -53,35 +53,13 @@ class MdGenEngine
             throw new FileNotFoundException($filename);
         }
 
-        $writer = new IndentWriter();
+        $writer = new IndentWriter('    ');
 
         $content = file_get_contents($filename);
         $lines = explode("\n", $content);
 
-        // Regex
-        $title = /** @lang PhpRegExp */
-            "/^(#+) *(.*)$/";
-        $image = /** @lang PhpRegExp */
-            "/^!\[(.*?)]\((.*?)\)$/";
-        $link = /** @lang PhpRegExp */
-            "/^\[(.*?)]\((.*?)\)$/";
-
-        $state = EngineState::$STATE_INIT;
-        foreach ($lines as $line) {
-            $matches = [];
-
-            // Titles
-            if (preg_match($title, $line, $matches)) {
-                $level = min(strlen($matches[1]), 6);
-                $writer->writeIndent("<h$level>$matches[2]</h$level>\n");
-            } // Images
-            else if (preg_match($image, $line, $matches)) {
-                $writer->writeIndent("<img src=\"$matches[2]\" alt=\"$matches[1]\"/>\n");
-            } // Link
-            else if (preg_match($link, $line, $matches)) {
-                $writer->writeIndent("<a href=\"$matches[2]\">$matches[1]</a>\n");
-            }
-        }
+        $parser = new MdParser($lines, $writer);
+        $parser->parse();
 
         return $writer->getBuffer();
     }
