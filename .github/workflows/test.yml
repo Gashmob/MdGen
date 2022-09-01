@@ -15,7 +15,9 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '5.6'
-      - run: php test.php
+      - run: |
+          composer install
+          php test.php
 
   test-windows:
     runs-on: windows-latest
@@ -27,7 +29,9 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '5.6'
-      - run: php test.php
+      - run: |
+          composer install
+          php test.php
 
   test-macos:
     runs-on: macos-latest
@@ -39,4 +43,6 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '5.6'
-      - run: php test.php
+      - run: |
+          composer install
+          php test.php
