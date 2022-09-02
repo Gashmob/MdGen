@@ -13,6 +13,7 @@ final class EngineState
     const TITLE = 6;
     const BOLD = 7;
     const LINK = 8;
+    const LIST_ITEM = 9;
 
     private function __construct()
     {

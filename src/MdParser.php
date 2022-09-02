@@ -38,6 +38,8 @@ class MdParser
         "/^\[(.*?)]\((.*?)\)$/";
     const BOLD = /** @lang PhpRegExp */
         "/^\*\*(.*?)\*\*$/";
+    const ORDER_LIST = /** @lang PhpRegExp */
+        "/^(\d+)\. *(.*)$/";
 
     public function parse()
     {
@@ -60,6 +62,7 @@ class MdParser
             $this->writer->indent();
             $this->state = EngineState::TITLE;
             $this->parseLine($matches[2]);
+            $this->state = EngineState::TITLE;
             $this->writer->unindent();
             $this->writer->writeIndent("</h$level>\n");
         } // Images
@@ -71,6 +74,7 @@ class MdParser
             $this->writer->indent();
             $this->state = EngineState::LINK;
             $this->parseLine($matches[1]);
+            $this->state = EngineState::LINK;
             $this->writer->unindent();
             $this->writer->writeIndent("</a>\n");
         } // Bold
@@ -79,14 +83,36 @@ class MdParser
             $this->writer->indent();
             $this->state = EngineState::BOLD;
             $this->parseLine($matches[1]);
+            $this->state = EngineState::BOLD;
             $this->writer->unindent();
             $this->writer->writeIndent("</strong>\n");
+        } // Ordered list
+        else if (preg_match(self::ORDER_LIST, $line, $matches)) {
+            if ($this->state !== EngineState::ORD_LIST) {
+                $this->writer->writeIndent("<ol>\n");
+                $this->writer->indent();
+            }
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->state = EngineState::LIST_ITEM;
+            $this->parseLine($matches[2]);
+            $this->state = EngineState::ORD_LIST;
+            $this->writer->unindent();
+            $this->writer->writeIndent("</li>\n");
         } // Text
-        else if ($line !== '') {
-            if ($this->state == EngineState::STATE_INIT) {
-                $this->writer->writeIndent("<p>$line</p>\n");
-            } else {
-                $this->writer->writeIndent($line . "\n");
+        else {
+            if ($this->state === EngineState::ORD_LIST) {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</ol>\n");
+                $this->state = EngineState::STATE_INIT;
+            }
+
+            if ($line !== '') {
+                if ($this->state == EngineState::STATE_INIT) {
+                    $this->writer->writeIndent("<p>$line</p>\n");
+                } else {
+                    $this->writer->writeIndent($line . "\n");
+                }
             }
         }
     }
