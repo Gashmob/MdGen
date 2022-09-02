@@ -12,6 +12,7 @@ final class EngineState
     const HTML = 5;
     const TITLE = 6;
     const BOLD = 7;
+    const LINK = 8;
 
     private function __construct()
     {

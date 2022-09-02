@@ -67,7 +67,12 @@ class MdParser
             $this->writer->writeIndent("<img src=\"$matches[2]\" alt=\"$matches[1]\"/>\n");
         } // Link
         else if (preg_match(self::LINK, $line, $matches)) {
-            $this->writer->writeIndent("<a href=\"$matches[2]\">$matches[1]</a>\n");
+            $this->writer->writeIndent("<a href=\"$matches[2]\">\n");
+            $this->writer->indent();
+            $this->state = EngineState::LINK;
+            $this->parseLine($matches[1]);
+            $this->writer->unindent();
+            $this->writer->writeIndent("</a>\n");
         } // Bold
         else if (preg_match(self::BOLD, $line, $matches)) {
             $this->writer->writeIndent("<strong>\n");
