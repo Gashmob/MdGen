@@ -32,9 +32,9 @@ foreach ($dirs as $dir) {
     } else {
         echo "\033[41m FAIL \033[0m\n";
         echo "Expected:\n";
-        echo $right_value;
+        echo "|$right_value|";
         echo "Got:\n";
-        echo $html;
+        echo "|$html|";
     }
 }
 

@@ -40,12 +40,16 @@ class MdParser
         "/^\*\*(.*?)\*\*$/";
     const ORDER_LIST = /** @lang PhpRegExp */
         "/^(\d+)\. *(.*)$/";
+    const UNORDER_LIST = /** @lang PhpRegExp */
+        "/^- *(.*)$/";
 
     public function parse()
     {
         foreach ($this->lines as $line) {
             $this->parseLine($line);
         }
+
+        $this->finishBalise();
     }
 
     /**
@@ -99,13 +103,22 @@ class MdParser
             $this->state = EngineState::ORD_LIST;
             $this->writer->unindent();
             $this->writer->writeIndent("</li>\n");
+        } // Unordered list
+        else if (preg_match(self::UNORDER_LIST, $line, $matches)) {
+            if ($this->state !== EngineState::UNORD_LIST) {
+                $this->writer->writeIndent("<ul>\n");
+                $this->writer->indent();
+            }
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->state = EngineState::LIST_ITEM;
+            $this->parseLine($matches[1]);
+            $this->state = EngineState::UNORD_LIST;
+            $this->writer->unindent();
+            $this->writer->writeIndent("</li>\n");
         } // Text
         else {
-            if ($this->state === EngineState::ORD_LIST) {
-                $this->writer->unindent();
-                $this->writer->writeIndent("</ol>\n");
-                $this->state = EngineState::STATE_INIT;
-            }
+            $this->finishBalise();
 
             if ($line !== '') {
                 if ($this->state == EngineState::STATE_INIT) {
@@ -114,6 +127,19 @@ class MdParser
                     $this->writer->writeIndent($line . "\n");
                 }
             }
+        }
+    }
+
+    private function finishBalise()
+    {
+        if ($this->state === EngineState::ORD_LIST) {
+            $this->writer->unindent();
+            $this->writer->writeIndent("</ol>\n");
+            $this->state = EngineState::STATE_INIT;
+        } else if ($this->state === EngineState::UNORD_LIST) {
+            $this->writer->unindent();
+            $this->writer->writeIndent("</ul>\n");
+            $this->state = EngineState::STATE_INIT;
         }
     }
 }
