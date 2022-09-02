@@ -42,6 +42,8 @@ class MdParser
         "/^(\d+)\. *(.*)$/";
     const UNORDER_LIST = /** @lang PhpRegExp */
         "/^- *(.*)$/";
+    const HR = /** @lang PhpRegExp */
+        "/^---+ *$/";
 
     public function parse()
     {
@@ -116,6 +118,9 @@ class MdParser
             $this->state = EngineState::UNORD_LIST;
             $this->writer->unindent();
             $this->writer->writeIndent("</li>\n");
+        } // hr
+        else if (preg_match(self::HR, $line, $matches) && $this->state === EngineState::STATE_INIT) {
+            $this->writer->writeIndent("<hr/>\n");
         } // Text
         else {
             $this->finishBalise();
