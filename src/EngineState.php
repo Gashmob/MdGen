@@ -8,6 +8,7 @@ final class EngineState
     const OLIST = 1;
     const ULIST = 2;
     const CODE = 3;
+    const QUOTE = 4;
 
     public $state;
     public $level;

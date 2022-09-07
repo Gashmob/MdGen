@@ -38,6 +38,8 @@ class MdParser
         "/^```(.*?) *$/";
     const BCODEE = /** @lang PhpRegExp */
         "/^``` *$/";
+    const QUOTE = /** @lang PhpRegExp */
+        "/^> +(.*)$/";
 
     /**
      * @throws ParserStateException
@@ -76,6 +78,9 @@ class MdParser
 
             case EngineState::CODE:
                 return $this->parseCode($line);
+
+            case EngineState::QUOTE:
+                return $this->parseQuote($line, $state);
 
             default:
                 throw new ParserStateException();
@@ -126,6 +131,13 @@ class MdParser
         if (preg_match(self::BCODEB, $line, $matches)) {
             $this->writer->writeIndent("<pre><code class=\"language-$matches[1]\">\n");
             return new EngineState(EngineState::CODE);
+        }
+
+        if (preg_match(self::QUOTE, $line, $matches)) {
+            $this->writer->writeIndent("<blockquote>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[1]));
+            return new EngineState(EngineState::QUOTE);
         }
 
         // If no match, use parseInLine (if line is not empty)
@@ -271,7 +283,7 @@ class MdParser
     }
 
     /**
-     * @param $line
+     * @param string $line
      * @return EngineState
      */
     private function parseCode($line)
@@ -284,6 +296,24 @@ class MdParser
         $this->writer->write($line . "\n");
 
         return new EngineState(EngineState::CODE);
+    }
+
+    /**
+     * @param string $line
+     * @return EngineState
+     */
+    private function parseQuote($line)
+    {
+        $matches = [];
+        if (preg_match(self::QUOTE, $line, $matches)) {
+            $this->writer->writeIndent($this->parseInLine($matches[1]));
+            return new EngineState(EngineState::QUOTE);
+        }
+
+        $this->writer->unindent();
+        $this->writer->writeIndent("</blockquote>\n");
+
+        return $this->parseInit($line);
     }
 
     const BOLD = /** @lang PhpRegExp */
