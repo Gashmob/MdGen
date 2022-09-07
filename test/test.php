@@ -4,6 +4,7 @@
 require_once '../vendor/autoload.php';
 
 use Gashmob\Mdgen\exceptions\FileNotFoundException;
+use Gashmob\Mdgen\exceptions\ParserStateException;
 use Gashmob\Mdgen\MdGenEngine;
 
 $engine = new MdGenEngine();
@@ -19,7 +20,7 @@ foreach ($dirs as $dir) {
 
     try {
         $html = $engine->render($file);
-    } catch (FileNotFoundException $e) {
+    } catch (Exception $e) {
         echo "\033[41m FAIL \033[0m " . $e->getMessage() . "\n";
         continue;
     }

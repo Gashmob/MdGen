@@ -376,10 +376,10 @@ echo "Hello world"
 bar
 ```
 
-Replace `{foo}` by the value gived at the render function :
+Replace `{foo}` by the value given at the render function :
 
 ```php
-$engine->('myTemplate.mdt', [ "foo" => "bar" ])
+$engine->render('myTemplate.mdt', [ "foo" => "bar" ])
 ```
 
 </td>
