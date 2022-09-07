@@ -275,6 +275,28 @@ Some text
 <td>
 
 ```md
+```bash
+echo "Hello world"
+\```
+```
+
+Write the end of code block without the backslash.
+
+</td>
+<td>
+
+```html
+<pre><code class="language-bash">
+echo "Hello world"
+</code></pre>
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```md
 > quote
 ```
 

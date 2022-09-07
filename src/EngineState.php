@@ -7,6 +7,7 @@ final class EngineState
     const INIT = 0;
     const OLIST = 1;
     const ULIST = 2;
+    const CODE = 3;
 
     public $state;
     public $level;

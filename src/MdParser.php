@@ -34,6 +34,10 @@ class MdParser
         "/^(( {4})*)- +(.*)$/";
     const HR = /** @lang PhpRegExp */
         "/^---+ *$/";
+    const BCODEB = /** @lang PhpRegExp */
+        "/^```(.*?) *$/";
+    const BCODEE = /** @lang PhpRegExp */
+        "/^``` *$/";
 
     /**
      * @throws ParserStateException
@@ -69,6 +73,9 @@ class MdParser
 
             case EngineState::ULIST:
                 return $this->parseUList($line, $state);
+
+            case EngineState::CODE:
+                return $this->parseCode($line);
 
             default:
                 throw new ParserStateException();
@@ -114,6 +121,11 @@ class MdParser
         if (preg_match(self::HR, $line, $matches)) {
             $this->writer->writeIndent("<hr/>\n");
             return new EngineState();
+        }
+
+        if (preg_match(self::BCODEB, $line, $matches)) {
+            $this->writer->writeIndent("<pre><code class=\"language-$matches[1]\">\n");
+            return new EngineState(EngineState::CODE);
         }
 
         // If no match, use parseInLine
@@ -254,6 +266,22 @@ class MdParser
         }
 
         return $this->parseInit($line);
+    }
+
+    /**
+     * @param $line
+     * @return EngineState
+     */
+    private function parseCode($line)
+    {
+        if (preg_match(self::BCODEE, $line)) {
+            $this->writer->writeIndent("</code></pre>\n");
+            return new EngineState();
+        }
+
+        $this->writer->write($line . "\n");
+
+        return new EngineState(EngineState::CODE);
     }
 
     const BOLD = /** @lang PhpRegExp */
