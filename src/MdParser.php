@@ -128,8 +128,10 @@ class MdParser
             return new EngineState(EngineState::CODE);
         }
 
-        // If no match, use parseInLine
-        $this->writer->writeIndent($this->parseInLine($line));
+        // If no match, use parseInLine (if line is not empty)
+        if ($line != '') {
+            $this->writer->writeIndent("<p>" . $this->parseInLine($line, false) . "</p>\n");
+        }
 
         return new EngineState();
     }
@@ -297,9 +299,10 @@ class MdParser
 
     /**
      * @param string $line
+     * @param bool $addNL
      * @return string
      */
-    private function parseInLine($line)
+    private function parseInLine($line, $addNL = true)
     {
         if ($line === '') {
             return $line;
@@ -311,7 +314,7 @@ class MdParser
         $line = preg_replace(self::IMAGE, '<img src="$2" alt="$1"/>', $line);
         $line = preg_replace(self::LINK, '<a href="$2">$1</a>', $line);
 
-        return $line . "\n";
+        return $line . ($addNL ? "\n" : "");
     }
 
     /**
