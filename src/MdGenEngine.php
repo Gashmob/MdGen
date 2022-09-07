@@ -2,7 +2,9 @@
 
 namespace Gashmob\Mdgen;
 
+use Exception;
 use Gashmob\Mdgen\exceptions\FileNotFoundException;
+use Gashmob\Mdgen\exceptions\ParserStateException;
 
 class MdGenEngine
 {
@@ -46,6 +48,7 @@ class MdGenEngine
      * @param $filename string The path to the template file
      * @return string The html corresponding to the template
      * @throws FileNotFoundException
+     * @throws ParserStateException
      */
     public function render($filename)
     {

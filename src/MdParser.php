@@ -2,22 +2,18 @@
 
 namespace Gashmob\Mdgen;
 
+use Gashmob\Mdgen\exceptions\ParserStateException;
+
 class MdParser
 {
     /**
      * @var string[]
      */
     private $lines;
-
     /**
      * @var IndentWriter
      */
     private $writer;
-
-    /**
-     * @var int
-     */
-    private $state = EngineState::STATE_INIT;
 
     /**
      * @param array $lines
@@ -32,119 +28,288 @@ class MdParser
     // Regex
     const TITLE = /** @lang PhpRegExp */
         "/^(#+) *(.*)$/";
-    const IMAGE = /** @lang PhpRegExp */
-        "/^!\[(.*?)]\((.*?)\)$/";
-    const LINK = /** @lang PhpRegExp */
-        "/^\[(.*?)]\((.*?)\)$/";
-    const BOLD = /** @lang PhpRegExp */
-        "/^\*\*(.*?)\*\*$/";
-    const ORDER_LIST = /** @lang PhpRegExp */
-        "/^(\d+)\. *(.*)$/";
-    const UNORDER_LIST = /** @lang PhpRegExp */
-        "/^- *(.*)$/";
+    const OLIST = /** @lang PhpRegExp */
+        "/^(( {4})*)(\d+)\. +(.*)$/";
+    const ULIST = /** @lang PhpRegExp */
+        "/^(( {4})*)- +(.*)$/";
     const HR = /** @lang PhpRegExp */
         "/^---+ *$/";
 
+    /**
+     * @throws ParserStateException
+     */
     public function parse()
     {
+        $state = new EngineState();
+
         foreach ($this->lines as $line) {
-            $this->parseLine($line);
+            $line = rtrim($line);
+
+            $state = $this->parseLine($state, $line);
         }
 
-        $this->finishBalise();
+        if ($state->state != EngineState::INIT) {
+            $this->finishBalise($state);
+        }
+    }
+
+    /**
+     * @param EngineState $state
+     * @param string $line
+     * @throws ParserStateException
+     */
+    private function parseLine($state, $line)
+    {
+        switch ($state->state) {
+            case EngineState::INIT:
+                return $this->parseInit($line);
+
+            case EngineState::OLIST:
+                return $this->parseOList($line, $state);
+
+            case EngineState::ULIST:
+                return $this->parseUList($line, $state);
+
+            default:
+                throw new ParserStateException();
+        }
     }
 
     /**
      * @param string $line
+     * @return EngineState
      */
-    private function parseLine($line)
+    private function parseInit($line)
     {
         $matches = [];
 
-        // Titles
         if (preg_match(self::TITLE, $line, $matches)) {
             $level = min(strlen($matches[1]), 6);
             $this->writer->writeIndent("<h$level>\n");
             $this->writer->indent();
-            $this->state = EngineState::TITLE;
-            $this->parseLine($matches[2]);
-            $this->state = EngineState::TITLE;
+            $this->writer->writeIndent($this->parseInLine($matches[2]));
             $this->writer->unindent();
             $this->writer->writeIndent("</h$level>\n");
-        } // Images
-        else if (preg_match(self::IMAGE, $line, $matches)) {
-            $this->writer->writeIndent("<img src=\"$matches[2]\" alt=\"$matches[1]\"/>\n");
-        } // Link
-        else if (preg_match(self::LINK, $line, $matches)) {
-            $this->writer->writeIndent("<a href=\"$matches[2]\">\n");
-            $this->writer->indent();
-            $this->state = EngineState::LINK;
-            $this->parseLine($matches[1]);
-            $this->state = EngineState::LINK;
-            $this->writer->unindent();
-            $this->writer->writeIndent("</a>\n");
-        } // Bold
-        else if (preg_match(self::BOLD, $line, $matches)) {
-            $this->writer->writeIndent("<strong>\n");
-            $this->writer->indent();
-            $this->state = EngineState::BOLD;
-            $this->parseLine($matches[1]);
-            $this->state = EngineState::BOLD;
-            $this->writer->unindent();
-            $this->writer->writeIndent("</strong>\n");
-        } // Ordered list
-        else if (preg_match(self::ORDER_LIST, $line, $matches)) {
-            if ($this->state !== EngineState::ORD_LIST) {
-                $this->writer->writeIndent("<ol>\n");
-                $this->writer->indent();
-            }
-            $this->writer->writeIndent("<li>\n");
-            $this->writer->indent();
-            $this->state = EngineState::LIST_ITEM;
-            $this->parseLine($matches[2]);
-            $this->state = EngineState::ORD_LIST;
-            $this->writer->unindent();
-            $this->writer->writeIndent("</li>\n");
-        } // Unordered list
-        else if (preg_match(self::UNORDER_LIST, $line, $matches)) {
-            if ($this->state !== EngineState::UNORD_LIST) {
-                $this->writer->writeIndent("<ul>\n");
-                $this->writer->indent();
-            }
-            $this->writer->writeIndent("<li>\n");
-            $this->writer->indent();
-            $this->state = EngineState::LIST_ITEM;
-            $this->parseLine($matches[1]);
-            $this->state = EngineState::UNORD_LIST;
-            $this->writer->unindent();
-            $this->writer->writeIndent("</li>\n");
-        } // hr
-        else if (preg_match(self::HR, $line, $matches) && $this->state === EngineState::STATE_INIT) {
-            $this->writer->writeIndent("<hr/>\n");
-        } // Text
-        else {
-            $this->finishBalise();
-
-            if ($line !== '') {
-                if ($this->state == EngineState::STATE_INIT) {
-                    $this->writer->writeIndent("<p>$line</p>\n");
-                } else {
-                    $this->writer->writeIndent($line . "\n");
-                }
-            }
+            return new EngineState();
         }
+
+        if (preg_match(self::OLIST, $line, $matches)) {
+            $this->writer->writeIndent("<ol>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[4]));
+            return new EngineState(EngineState::OLIST, 0);
+        }
+
+        if (preg_match(self::ULIST, $line, $matches)) {
+            $this->writer->writeIndent("<ul>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[3]));
+            return new EngineState(EngineState::ULIST, 0);
+        }
+
+        if (preg_match(self::HR, $line, $matches)) {
+            $this->writer->writeIndent("<hr/>\n");
+            return new EngineState();
+        }
+
+        // If no match, use parseInLine
+        $this->writer->writeIndent($this->parseInLine($line));
+
+        return new EngineState();
     }
 
-    private function finishBalise()
+    /**
+     * @param string $line
+     * @param EngineState $state
+     * @return EngineState
+     */
+    private function parseOList($line, $state)
     {
-        if ($this->state === EngineState::ORD_LIST) {
+        if (preg_match(self::OLIST, $line, $matches)) {
+            $level = strlen($matches[1]) / 4;
+            if ($level > $state->level) {
+                $this->writer->writeIndent("<ol>\n");
+                $this->writer->indent();
+            } else if ($level < $state->level) {
+                for ($i = $state->level; $i > $level; $i--) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ol>\n");
+                }
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            } else {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            }
+
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[4]));
+            return new EngineState(EngineState::OLIST, $level);
+        }
+
+        if (preg_match(self::ULIST, $line, $matches)) {
+            $level = strlen($matches[1]) / 4;
+            if ($level > $state->level) {
+                $this->writer->writeIndent("<ul>\n");
+                $this->writer->indent();
+            } else if ($level < $state->level) {
+                for ($i = $state->level; $i > $level; $i--) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ol>\n");
+                }
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            } else {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            }
+
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[3]));
+            return new EngineState(EngineState::ULIST, $level);
+        }
+
+        for ($i = -1; $i < $state->level; $i++) {
+            $this->writer->unindent();
+            $this->writer->writeIndent("</li>\n");
             $this->writer->unindent();
             $this->writer->writeIndent("</ol>\n");
-            $this->state = EngineState::STATE_INIT;
-        } else if ($this->state === EngineState::UNORD_LIST) {
+        }
+
+        return $this->parseInit($line);
+    }
+
+    /**
+     * @param string $line
+     * @param EngineState $state
+     * @return EngineState
+     */
+    private function parseUList($line, $state)
+    {
+        if (preg_match(self::ULIST, $line, $matches)) {
+            $level = strlen($matches[1]) / 4;
+            if ($level > $state->level) {
+                $this->writer->writeIndent("<ul>\n");
+                $this->writer->indent();
+            } else if ($level < $state->level) {
+                for ($i = $state->level; $i > $level; $i--) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ul>\n");
+                }
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            } else {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            }
+
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[3]));
+            return new EngineState(EngineState::ULIST, $level);
+        }
+
+        if (preg_match(self::OLIST, $line, $matches)) {
+            $level = strlen($matches[1]) / 4;
+            if ($level > $state->level) {
+                $this->writer->writeIndent("<ol>\n");
+                $this->writer->indent();
+            } else if ($level < $state->level) {
+                for ($i = $state->level; $i > $level; $i--) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ul>\n");
+                }
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            } else {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</li>\n");
+            }
+
+            $this->writer->writeIndent("<li>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent($this->parseInLine($matches[4]));
+            return new EngineState(EngineState::OLIST, $level);
+        }
+
+        for ($i = -1; $i < $state->level; $i++) {
+            $this->writer->unindent();
+            $this->writer->writeIndent("</li>\n");
             $this->writer->unindent();
             $this->writer->writeIndent("</ul>\n");
-            $this->state = EngineState::STATE_INIT;
+        }
+
+        return $this->parseInit($line);
+    }
+
+    const BOLD = /** @lang PhpRegExp */
+        "/\*\*([^ ].*?[^ ])\*\*/";
+    const ITALIC = /** @lang PhpRegExp */
+        "/\*([^ ].*?[^ ])\*/";
+    const CODE = /** @lang PhpRegExp */
+        "/`(.*?)`/";
+    const IMAGE = /** @lang PhpRegExp */
+        "/^!\[(.*?)]\((.*?)\)$/";
+    const LINK = /** @lang PhpRegExp */
+        "/^\[(.*?)]\((.*?)\)$/";
+
+    /**
+     * @param string $line
+     * @return string
+     */
+    private function parseInLine($line)
+    {
+        if ($line === '') {
+            return $line;
+        }
+
+        $line = preg_replace(self::BOLD, '<strong>$1</strong>', $line);
+        $line = preg_replace(self::ITALIC, '<em>$1</em>', $line);
+        $line = preg_replace(self::CODE, '<code>$1</code>', $line);
+        $line = preg_replace(self::IMAGE, '<img src="$2" alt="$1"/>', $line);
+        $line = preg_replace(self::LINK, '<a href="$2">$1</a>', $line);
+
+        return $line . "\n";
+    }
+
+    /**
+     * @param EngineState $state
+     * @return void
+     */
+    private function finishBalise($state)
+    {
+        switch ($state->state) {
+            case EngineState::OLIST:
+                for ($i = -1; $i < $state->level; $i++) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ol>\n");
+                }
+                break;
+
+            case EngineState::ULIST:
+                for ($i = -1; $i < $state->level; $i++) {
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</li>\n");
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</ul>\n");
+                }
+                break;
         }
     }
 }

@@ -4,18 +4,16 @@ namespace Gashmob\Mdgen;
 
 final class EngineState
 {
-    const STATE_INIT = 0;
-    const ORD_LIST = 1;
-    const UNORD_LIST = 2;
-    const BLOCK_QUOTE = 3;
-    const TABLE = 4;
-    const HTML = 5;
-    const TITLE = 6;
-    const BOLD = 7;
-    const LINK = 8;
-    const LIST_ITEM = 9;
+    const INIT = 0;
+    const OLIST = 1;
+    const ULIST = 2;
 
-    private function __construct()
+    public $state;
+    public $level;
+
+    public function __construct($state = self::INIT, $level = -1)
     {
+        $this->state = $state;
+        $this->level = $level;
     }
 }
