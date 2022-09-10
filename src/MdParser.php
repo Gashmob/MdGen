@@ -157,7 +157,11 @@ class MdParser
 
         // If no match, use parseInLine (if line is not empty)
         if ($line != '') {
-            $this->writer->writeIndent("<p>" . $this->parseInLine($line, false) . "</p>\n");
+            if (preg_match('/^<[a-z]+.*?>.*<\/[a-z]+>/', $line)) {
+                $this->writer->writeIndent($this->parseInLine($line));
+            } else {
+                $this->writer->writeIndent("<p>" . $this->parseInLine($line, false) . "</p>\n");
+            }
         }
 
         return new EngineState();

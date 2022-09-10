@@ -369,7 +369,7 @@ echo "Hello world"
 
 ```html
 <div>Some html</div>
-<div><h1>Title</h1></div>
+<div># Title</div>
 ```
 
 </td>
