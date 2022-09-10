@@ -327,16 +327,28 @@ echo "Hello world"
 <table>
     <thead>
         <tr>
-            <th style="text-align:left;">Col 1</th>
-            <th style="text-align:center;">Col 2</th>
-            <th style="text-align:right;">Col 3</th>
+            <th style="text-align:left;">
+              Col 1
+            </th>
+            <th style="text-align:center;">
+              Col 2
+            </th>
+            <th style="text-align:right;">
+              Col 3
+            </th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td>1</td>
-            <td>2</td>
-            <td>3</td>
+            <td style="text-align:left;">
+              1
+            </td>
+            <td style="text-align:center;">
+              2
+            </td>
+            <td style="text-align:right;">
+              3
+            </td>
         </tr>
     </tbody>
 </table>

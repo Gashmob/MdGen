@@ -40,6 +40,10 @@ class MdParser
         "/^``` *$/";
     const QUOTE = /** @lang PhpRegExp */
         "/^> +(.*)$/";
+    const TABLEL = /** @lang PhpRegExp */
+        "/^\|(.*?\|)+ *$/";
+    const TABLEH = /** @lang PhpRegExp */
+        "/^\|( *:?-+:? *\|)+ *$/";
 
     /**
      * @throws ParserStateException
@@ -80,7 +84,12 @@ class MdParser
                 return $this->parseCode($line);
 
             case EngineState::QUOTE:
-                return $this->parseQuote($line, $state);
+                return $this->parseQuote($line);
+
+            case EngineState::TABLE:
+            case EngineState::TABLEH:
+            case EngineState::TABLEB:
+                return $this->parseTable($line, $state);
 
             default:
                 throw new ParserStateException();
@@ -123,7 +132,7 @@ class MdParser
             return new EngineState(EngineState::ULIST, 0);
         }
 
-        if (preg_match(self::HR, $line, $matches)) {
+        if (preg_match(self::HR, $line)) {
             $this->writer->writeIndent("<hr/>\n");
             return new EngineState();
         }
@@ -138,6 +147,12 @@ class MdParser
             $this->writer->indent();
             $this->writer->writeIndent($this->parseInLine($matches[1]));
             return new EngineState(EngineState::QUOTE);
+        }
+
+        if (preg_match(self::TABLEL, $line)) {
+            $this->writer->writeIndent("<table>\n");
+            $this->writer->indent();
+            return new EngineState(EngineState::TABLE, -1, $line);
         }
 
         // If no match, use parseInLine (if line is not empty)
@@ -316,10 +331,116 @@ class MdParser
         return $this->parseInit($line);
     }
 
+    const ALIGNL = /** @lang PhpRegExp */
+        "/^:-+$/";
+    const ALIGNR = /** @lang PhpRegExp */
+        "/^-+:$/";
+    const ALIGNC = /** @lang PhpRegExp */
+        "/^:-+:$/";
+
+    /**
+     * @param string $line
+     * @param EngineState $state
+     * @return EngineState
+     */
+    private function parseTable($line, $state)
+    {
+        if (preg_match(self::TABLEH, $line) && $state->table != '') {
+            if ($state->state == EngineState::TABLEB) {
+                $this->writer->unindent();
+                $this->writer->writeIndent("</tbody>\n");
+            }
+
+            $this->writer->writeIndent("<thead>\n");
+            $this->writer->indent();
+            $this->writer->writeIndent("<tr>\n");
+            $this->writer->indent();
+            $lastline = $state->table;
+            $cols = array_values(array_filter(explode('|', $lastline), 'Gashmob\Mdgen\filter_array_empty'));
+            $aligns = array_values(array_filter(explode('|', $line), 'Gashmob\Mdgen\filter_array_empty'));
+            for ($i = 0; $i < count($aligns); $i++) {
+                if (preg_match(self::ALIGNL, $aligns[$i])) {
+                    $aligns[$i] = 'style="text-align:left;"';
+                } else if (preg_match(self::ALIGNR, $aligns[$i])) {
+                    $aligns[$i] = 'style="text-align:right;"';
+                } else if (preg_match(self::ALIGNC, $aligns[$i])) {
+                    $aligns[$i] = 'style="text-align:center;"';
+                } else {
+                    $aligns[$i] = '';
+                }
+            }
+
+            for ($i = 0; $i < count($cols); $i++) {
+                $this->writer->writeIndent("<th $aligns[$i]>\n");
+                $this->writer->indent();
+                $this->writer->writeIndent($this->parseInLine($cols[$i]));
+                $this->writer->unindent();
+                $this->writer->writeIndent("</th>\n");
+            }
+
+            $this->writer->unindent();
+            $this->writer->writeIndent("</tr>\n");
+            $this->writer->unindent();
+            $this->writer->writeIndent("</thead>\n");
+
+            return new EngineState(EngineState::TABLEH, -1, '', $aligns);
+        }
+
+        if (preg_match(self::TABLEL, $line)) {
+            if ($state->state == EngineState::TABLEH) {
+                $this->writer->writeIndent("<tbody>\n");
+                $this->writer->indent();
+            }
+
+            $lastline = $state->table;
+            if ($lastline != '') {
+                $this->writer->writeIndent("<tr>\n");
+                $this->writer->indent();
+
+                $cols = array_values(array_filter(explode('|', $state->table), 'Gashmob\Mdgen\filter_array_empty'));
+                for ($i = 0; $i < count($cols); $i++) {
+                    $this->writer->writeIndent("<td {$state->aligns[$i]}>\n");
+                    $this->writer->indent();
+                    $this->writer->writeIndent($this->parseInLine($cols[$i]));
+                    $this->writer->unindent();
+                    $this->writer->writeIndent("</td>\n");
+                }
+
+                $this->writer->unindent();
+                $this->writer->writeIndent("</tr>\n");
+            }
+
+            return new EngineState(EngineState::TABLEB, -1, $line, $state->aligns);
+        }
+
+        if ($state->state == EngineState::TABLEB) {
+            $this->writer->writeIndent("<tr>\n");
+            $this->writer->indent();
+
+            $cols = array_values(array_filter(explode('|', $state->table), 'Gashmob\Mdgen\filter_array_empty'));
+            for ($i = 0; $i < count($cols); $i++) {
+                $this->writer->writeIndent("<td {$state->aligns[$i]}>\n");
+                $this->writer->indent();
+                $this->writer->writeIndent($this->parseInLine($cols[$i]));
+                $this->writer->unindent();
+                $this->writer->writeIndent("</td>\n");
+            }
+
+            $this->writer->unindent();
+            $this->writer->writeIndent("</tr>\n");
+            $this->writer->unindent();
+            $this->writer->writeIndent("</tbody>\n");
+        }
+        $this->writer->unindent();
+        $this->writer->writeIndent("</table>\n");
+
+        return $this->parseInit($line);
+    }
+
     const BOLD = /** @lang PhpRegExp */
-        "/\*\*([^ ].*?[^ ])\*\*/";
+        "/\*\*(.+?)\*\*/";
     const ITALIC = /** @lang PhpRegExp */
-        "/\*([^ ].*?[^ ])\*/";
+        "/\*(.+?)\*/";
     const CODE = /** @lang PhpRegExp */
         "/`(.*?)`/";
     const IMAGE = /** @lang PhpRegExp */
@@ -337,6 +458,8 @@ class MdParser
         if ($line === '') {
             return $line;
         }
+
+        $line = trim($line);
 
         $line = preg_replace(self::BOLD, '<strong>$1</strong>', $line);
         $line = preg_replace(self::ITALIC, '<em>$1</em>', $line);
@@ -371,6 +494,27 @@ class MdParser
                     $this->writer->writeIndent("</ul>\n");
                 }
                 break;
+
+            case EngineState::QUOTE:
+                $this->writer->unindent();
+                $this->writer->writeIndent("</blockquote>\n");
+                break;
+
+            case EngineState::TABLEB:
+                $this->writer->unindent();
+                $this->writer->writeIndent("</tbody>\n");
+                $this->writer->unindent();
+                $this->writer->writeIndent("</table>\n");
+                break;
         }
     }
+}
+
+/**
+ * @param string $value
+ * @return bool
+ */
+function filter_array_empty($value)
+{
+    return $value !== '';
 }
