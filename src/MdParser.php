@@ -51,7 +51,7 @@ class MdParser
     const USELESS_LINE = /** @lang PhpRegExp */
         "/^\[#]: +(.+?) +-> +(.+?) *$/"; // Match on [#]: <key> -> <value>
     const BASE = /** @lang PhpRegExp */
-        "/^\[#]: *base *(.+?) *$/"; // Match on [#]: base <template>
+        "/^\[#]: *base +(.+?) *$/"; // Match on [#]: base <template>
     const BASE_INCLUDE = /** @lang PhpRegExp */
         "/^\[#]: *baseInclude *$/"; // Match on [#]: baseInclude
     const INCLUDE_ = /** @lang PhpRegExp */
@@ -107,10 +107,10 @@ class MdParser
             $matches = [];
             if (preg_match(self::BASE, $line, $matches)) {
                 $lines[$i] = '';
-                if (!file_exists(MdGenEngine::getBasePath() . $matches[1])) {
-                    throw new FileNotFoundException(MdGenEngine::getBasePath() . $matches[1]);
+                if (!file_exists(MdGenEngine::getBasePath() . $matches[1] . '.mdt')) {
+                    throw new FileNotFoundException(MdGenEngine::getBasePath() . $matches[1] . '.mdt');
                 }
-                $this->parseBase($matches[1], $lines);
+                $this->parseBase($matches[1] . '.mdt', $lines);
                 return [];
             }
 
