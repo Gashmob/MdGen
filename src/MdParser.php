@@ -249,13 +249,15 @@ class MdParser
         }
 
         if (preg_match(self::INCLUDE_, $line, $matches)) {
-            if (!file_exists(MdGenEngine::getIncludePath() . $matches[1])) {
-                throw new FileNotFoundException(MdGenEngine::getIncludePath() . $matches[1]);
+            if (!file_exists(MdGenEngine::getIncludePath() . $matches[1] . '.mdt')) {
+                throw new FileNotFoundException(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
             }
-            $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1]);
+            $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
             $lines = explode("\n", $content);
             $parser = new MdParser($lines, $this->writer);
             $parser->parse($this->values);
+
+            return new EngineState();
         }
 
         // If no match, use parseInLine (if line is not empty)
