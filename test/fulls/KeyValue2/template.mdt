@@ -1,0 +1,5 @@
+[#]: foo -> "bar"
+[#]: hello -> "world!"
+[#]: number -> 42
+[#]: pi -> 3.14
+<p>Hi {hello} The best number is {number} but i prefer {pi}, no you ? ...</p>
