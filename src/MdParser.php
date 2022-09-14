@@ -115,7 +115,7 @@ class MdParser
             }
 
             $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) {
-                return $this->values[$matches[1]];
+                return $this->parseValue($this->values[$matches[1]]);
             }, $line);
         }
 
@@ -617,6 +617,30 @@ class MdParser
                 $this->writer->unindent();
                 $this->writer->writeIndent("</table>\n");
                 break;
+        }
+    }
+
+    /**
+     * @param string $value
+     * @return array|bool|float|int|string|null
+     */
+    private function parseValue($value)
+    {
+        if (is_numeric($value)) {
+            return $value + 0;
+        } else if (strtolower($value) == 'true') {
+            return true;
+        } else if (strtolower($value) == 'false') {
+            return false;
+        } else if (strtolower($value) == 'null') {
+            return null;
+        } else if (preg_match("/^\[.*]$/", $value)) {
+            $array = explode(',', substr($value, 1, -1));
+            return array_map("Gashmob\\YamlEditor\\YamlParser::parseValue", $array);
+        } else if (preg_match("/^\".*\"$/", $value)) {
+            return substr($value, 1, -1);
+        } else {
+            return $value;
         }
     }
 }

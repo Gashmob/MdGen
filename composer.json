@@ -14,7 +14,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Gashmob\\Mdgen\\": "src/"
+            "Gashmob\\Mdgen\\": "src/",
+            "Gashmob\\Mdgen\\Test\\": "test/"
         }
     }
 }

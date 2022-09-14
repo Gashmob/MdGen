@@ -74,10 +74,11 @@ class MdGenEngine
      * Render a template
      *
      * @param $filename string The path to the template file
+     * @param $values string[] The values to use in the template
      * @return string The html corresponding to the template
      * @throws FileNotFoundException|ParserStateException
      */
-    public function render($filename)
+    public function render($filename, $values = [])
     {
         if (!file_exists($filename)) {
             throw new FileNotFoundException($filename);
@@ -89,7 +90,7 @@ class MdGenEngine
         $lines = explode("\n", $content);
 
         $parser = new MdParser($lines, $writer);
-        $parser->parse();
+        $parser->parse($values);
 
         return $writer->getBuffer();
     }
