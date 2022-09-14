@@ -2,6 +2,7 @@
 
 namespace Gashmob\Mdgen;
 
+use Gashmob\Mdgen\exceptions\FileNotFoundException;
 use Gashmob\Mdgen\exceptions\ParserStateException;
 
 class MdParser
@@ -44,12 +45,35 @@ class MdParser
         "/^\|(.*?\|)+ *$/";
     const TABLEH = /** @lang PhpRegExp */
         "/^\|( *:?-+:? *\|)+ *$/";
+    const COMMENT = /** @lang PhpRegExp */
+        "/^ *\[#]:.*$/";
+
+    const USELESS_LINE = /** @lang PhpRegExp */
+        "/^\[#]: +(.+?) +-> +(.+?) *$/"; // Match on [#]: <key> -> <value>
+    const BASE = /** @lang PhpRegExp */
+        "/^\[#]: *base *(.+?) *$/"; // Match on [#]: base <template>
+    const BASE_INCLUDE = /** @lang PhpRegExp */
+        "/^\[#]: *baseInclude *$/"; // Match on [#]: baseInclude
+    const INCLUDE_ = /** @lang PhpRegExp */
+        "/^\[#]: *include *(.+?) *$/"; // Match on [#]: include <template>
+    const VAR_ = /** @lang PhpRegExp */
+        "/\{(.+?)}/"; // Match on {<var>}
 
     /**
-     * @throws ParserStateException
+     * @var array
      */
-    public function parse()
+    private $values = [];
+
+    /**
+     * @param array $values
+     * @throws ParserStateException|FileNotFoundException
+     */
+    public function parse($values = [])
     {
+        $this->values = $values;
+
+        $this->lines = $this->parseScript();
+
         $state = new EngineState();
 
         foreach ($this->lines as $line) {
@@ -64,12 +88,79 @@ class MdParser
     }
 
     /**
+     * @param array $lines
+     * @return array
+     * @throws FileNotFoundException|ParserStateException
+     */
+    private function parseScript($lines = null)
+    {
+        if ($lines == null) {
+            $lines = $this->lines;
+        }
+        for ($i = 0; $i < count($lines); $i++) {
+            $line = $lines[$i];
+
+            if (preg_match(self::USELESS_LINE, $line)) {
+                $lines[$i] = '';
+                continue;
+            }
+            $matches = [];
+            if (preg_match(self::BASE, $line, $matches)) {
+                $lines[$i] = '';
+                if (!file_exists(MdGenEngine::getBasePath() . $matches[1])) {
+                    throw new FileNotFoundException(MdGenEngine::getBasePath() . $matches[1]);
+                }
+                $this->parseBase($matches[1], $lines);
+                return [];
+            }
+
+            $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) {
+                return $this->values[$matches[1]];
+            }, $line);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param string $template
+     * @param string[] $includeLines
+     * @return void
+     * @throws FileNotFoundException|ParserStateException
+     */
+    private function parseBase($template, $includeLines)
+    {
+        $content = file_get_contents(MdGenEngine::getBasePath() . $template);
+        $lines = explode("\n", $content);
+        $lines = $this->parseScript($lines);
+
+        $state = new EngineState();
+
+        foreach ($lines as $line) {
+            $line = rtrim($line);
+
+            if (preg_match(self::BASE_INCLUDE, $line)) {
+                foreach ($includeLines as $includeLine) {
+                    $state = $this->parseLine($state, $includeLine);
+                }
+                continue;
+            }
+
+            $state = $this->parseLine($state, $line);
+        }
+    }
+
+    /**
      * @param EngineState $state
      * @param string $line
-     * @throws ParserStateException
+     * @throws ParserStateException|FileNotFoundException
      */
     private function parseLine($state, $line)
     {
+        if (preg_match(self::COMMENT, $line) && !preg_match(self::INCLUDE_, $line)) { // Ignore comments
+            return $state;
+        }
+
         switch ($state->state) {
             case EngineState::INIT:
                 return $this->parseInit($line);
@@ -99,6 +190,8 @@ class MdParser
     /**
      * @param string $line
      * @return EngineState
+     * @throws FileNotFoundException
+     * @throws ParserStateException
      */
     private function parseInit($line)
     {
@@ -155,6 +248,16 @@ class MdParser
             return new EngineState(EngineState::TABLE, -1, $line);
         }
 
+        if (preg_match(self::INCLUDE_, $line, $matches)) {
+            if (!file_exists(MdGenEngine::getIncludePath() . $matches[1])) {
+                throw new FileNotFoundException(MdGenEngine::getIncludePath() . $matches[1]);
+            }
+            $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1]);
+            $lines = explode("\n", $content);
+            $parser = new MdParser($lines, $this->writer);
+            $parser->parse($this->values);
+        }
+
         // If no match, use parseInLine (if line is not empty)
         if ($line != '') {
             if (preg_match('/^<[a-z]+.*?>.*<\/[a-z]+>/', $line)) {
@@ -171,6 +274,7 @@ class MdParser
      * @param string $line
      * @param EngineState $state
      * @return EngineState
+     * @throws FileNotFoundException|ParserStateException
      */
     private function parseOList($line, $state)
     {
@@ -238,6 +342,7 @@ class MdParser
      * @param string $line
      * @param EngineState $state
      * @return EngineState
+     * @throws FileNotFoundException|ParserStateException
      */
     private function parseUList($line, $state)
     {
@@ -320,6 +425,7 @@ class MdParser
     /**
      * @param string $line
      * @return EngineState
+     * @throws FileNotFoundException|ParserStateException
      */
     private function parseQuote($line)
     {
@@ -346,6 +452,7 @@ class MdParser
      * @param string $line
      * @param EngineState $state
      * @return EngineState
+     * @throws FileNotFoundException|ParserStateException
      */
     private function parseTable($line, $state)
     {

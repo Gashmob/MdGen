@@ -2,14 +2,42 @@
 
 namespace Gashmob\Mdgen;
 
-use Exception;
 use Gashmob\Mdgen\exceptions\FileNotFoundException;
 use Gashmob\Mdgen\exceptions\ParserStateException;
 
 class MdGenEngine
 {
+    /**
+     * @var string
+     */
+    private static $includePath = './';
+    /**
+     * @var string
+     */
+    private static $basePath = './';
+
     public function __construct()
     {
+    }
+
+    public function includePath($path)
+    {
+        self::$includePath = $path;
+    }
+
+    public static function getIncludePath()
+    {
+        return self::$includePath;
+    }
+
+    public function basePath($path)
+    {
+        self::$basePath = $path;
+    }
+
+    public static function getBasePath()
+    {
+        return self::$basePath;
     }
 
     /**
@@ -29,7 +57,7 @@ class MdGenEngine
         $result = [];
 
         $regex = /** @lang PhpRegExp */
-            "/^\[#]: *(.*?) *-> *(.*?)$/"; // Match on [#]: <key> -> <value>
+            "/^\[#]: +(.+?) +-> +(.+?) *$/"; // Match on [#]: <key> -> <value>
         foreach ($lines as $line) {
             $matches = [];
             if (preg_match($regex, $line, $matches)) {
@@ -47,8 +75,7 @@ class MdGenEngine
      *
      * @param $filename string The path to the template file
      * @return string The html corresponding to the template
-     * @throws FileNotFoundException
-     * @throws ParserStateException
+     * @throws FileNotFoundException|ParserStateException
      */
     public function render($filename)
     {
