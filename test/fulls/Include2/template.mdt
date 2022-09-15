@@ -1,0 +1,3 @@
+Just after, we will have some values
+[#]: include included { "foo":"bar", "number":42 }
+Just before, we have some values

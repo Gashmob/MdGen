@@ -55,7 +55,7 @@ class MdParser
     const BASE_INCLUDE = /** @lang PhpRegExp */
         "/^\[#]: *baseInclude *$/"; // Match on [#]: baseInclude
     const INCLUDE_ = /** @lang PhpRegExp */
-        "/^\[#]: *include *(.+?) *$/"; // Match on [#]: include <template>
+        '/^\[#]: *include *(.+?) *(\{.*})?$/'; // Match on [#]: include <template> { "<key>":<value>, "<key>":<value> }
     const VAR_ = /** @lang PhpRegExp */
         "/\{(.+?)}/"; // Match on {<var>}
 
@@ -114,7 +114,10 @@ class MdParser
                 return [];
             }
 
-            $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) {
+            $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) use ($line) {
+                if (preg_match(self::INCLUDE_, $line)) {
+                    return '{' . $matches[1] . '}';
+                }
                 return $this->parseValue($this->getValue($this->values, $matches[1]));
             }, $line);
         }
@@ -255,7 +258,8 @@ class MdParser
             $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
             $lines = explode("\n", $content);
             $parser = new MdParser($lines, $this->writer);
-            $parser->parse($this->values);
+            $includeValues = count($matches) > 2 ? $this->getIncludeValues(trim(substr($matches[2], 1, -1)), $this->values) : [];
+            $parser->parse(array_merge($this->values, $includeValues));
 
             return new EngineState();
         }
@@ -623,6 +627,37 @@ class MdParser
     }
 
     /**
+     * @param string $line
+     * @param array $values
+     * @return array
+     */
+    private function getIncludeValues($line, $values)
+    {
+        $keyValues = explode(',', $line);
+
+        $regex = /** @lang PhpRegExp */
+            '/^"(.*?)":(.*)$/';
+
+        $result = [];
+        foreach ($keyValues as $keyValue) {
+            $matches = [];
+            if (preg_match($regex, $keyValue, $matches)) {
+                array_shift($matches);
+            } else {
+                $matches = explode(':', $keyValue);
+                $matches[0] = substr(trim($matches[0]), 1, -1);
+            }
+            assert(count($matches) == 2);
+            $key = trim($matches[0]);
+            $value = $this->parseValue($this->getValue($values, $matches[1]));
+
+            $result[$key] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array $values
      * @param string $key
      * @return string
@@ -637,7 +672,7 @@ class MdParser
             } elseif (isset($current[$key])) {
                 $current = $current[$key];
             } else {
-                return "";
+                return $key;
             }
         }
 
