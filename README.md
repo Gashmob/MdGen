@@ -6,11 +6,12 @@
 Markdown template engine. This php library will generate html from markdown templates (`*.mdt` file).
 
 - [Usage](#usage)
-    - [Templates format](#templates-format)
-    - [Special](#special)
-        - [Base template](#base-template)
-        - [Include template](#include-template)
-    - [Generate html](#generate-html)
+  - [Templates format](#templates-format)
+  - [Special](#special)
+    - [Base template](#base-template)
+    - [Include template](#include-template)
+    - [Scripting](#scripting)
+  - [Generate html](#generate-html)
 - [Installation](#installation)
 
 ## Usage
@@ -473,6 +474,28 @@ the template name :
 ```md
 [#]: include someTemplate { "foo":"bar", "hello":"world" }
 ```
+
+#### Scripting
+
+You can also create conditions and loops. Let's begin with conditions.
+
+```md
+{% if foo == "bar" %}
+The variable foo is equal to bar
+{% endif %}
+```
+
+The statements `{%  %}` needs to have their own line.
+
+And now, loops :
+
+```md
+{% for value in values %}
+- {value}
+{% endfor %}
+```
+
+Like for conditions, loop statements needs to have their own line.
 
 ### Generate html
 
