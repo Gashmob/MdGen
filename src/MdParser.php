@@ -115,7 +115,7 @@ class MdParser
             }
 
             $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) {
-                return $this->parseValue($this->values[$matches[1]]);
+                return $this->parseValue($this->getValue($this->values, $matches[1]));
             }, $line);
         }
 
@@ -620,6 +620,28 @@ class MdParser
                 $this->writer->writeIndent("</table>\n");
                 break;
         }
+    }
+
+    /**
+     * @param array $values
+     * @param string $key
+     * @return string
+     */
+    private function getValue($values, $key)
+    {
+        $keys = explode('.', $key);
+        $current = $values;
+        foreach ($keys as $key) {
+            if (isset($current->$key)) {
+                $current = $current->$key;
+            } elseif (isset($current[$key])) {
+                $current = $current[$key];
+            } else {
+                return "";
+            }
+        }
+
+        return $current;
     }
 
     /**
