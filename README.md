@@ -482,6 +482,8 @@ You can also create conditions and loops. Let's begin with conditions.
 ```md
 {% if foo == "bar" %}
 The variable foo is equal to bar
+{% else %}
+The variable foo is not equal to bar
 {% endif %}
 ```
 
