@@ -7,3 +7,4 @@
 - [x] Create IndentWriter class
 - [x] Add params for includes
 - [ ] Script language for make loop and conditions
+- [ ] Cache system
