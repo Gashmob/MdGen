@@ -4,6 +4,7 @@
 
 - Manage nested values in templates variables
 - Add params for include statement
+- Add script language for make loops
 
 ## v0.1
 
