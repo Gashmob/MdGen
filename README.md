@@ -12,6 +12,7 @@ Markdown template engine. This php library will generate html from markdown temp
     - [Include template](#include-template)
     - [Scripting](#scripting)
   - [Generate html](#generate-html)
+  - [Cache](#cache)
 - [Installation](#installation)
 
 ## Usage
@@ -522,6 +523,34 @@ $html = $engine->render('myTemplate.mdt', [
     "foo" => "bar",
 ]);
 ```
+
+### Cache
+
+To avoid long render time each time, you can use the internal cache system that store in a dedicated dir the results of past renders. By default this system is disable, but you can enable it by using :
+
+```php
+use Gashmob\MdGen\MdGenEngine;
+
+$engine = new MdGenEngine();
+
+// Enable cache
+$engine->cache('path/to/cache/dir');
+
+// Disable cache
+$engine->cache(false);
+```
+
+If the dir doesn't exists, it will create it. When you enable the cache, it will be enable for all instances of `MdGenEngine`.
+
+You can also set the lifespan of cache by using :
+
+```php
+use Gashmob\MdGen\MdGenEngine;
+
+MdGenEngine::$cacheLifespan = 3600 * 24 * 365; // 1 year in seconds
+```
+
+By default the lifespan is set to 1 month.
 
 ## Installation
 

@@ -15,6 +15,14 @@ class MdGenEngine
      * @var string
      */
     private static $basePath = './';
+    /**
+     * @var string|false
+     */
+    private static $cache = false;
+    /**
+     * @var int Lifespan of cache in seconds
+     */
+    public static $cacheLifespan = 30 * 24 * 60 * 60; // 1 month
 
     public function __construct()
     {
@@ -38,6 +46,16 @@ class MdGenEngine
     public static function getBasePath()
     {
         return self::$basePath;
+    }
+
+    public function cache($cache)
+    {
+        if ($cache) {
+            if (!is_dir($cache)) {
+                mkdir($cache, 0777, true);
+            }
+        }
+        self::$cache = $cache;
     }
 
     /**
@@ -87,11 +105,29 @@ class MdGenEngine
         $writer = new IndentWriter('    ');
 
         $content = file_get_contents($filename);
+
+        if (self::$cache) {
+            $cacheFile = self::$cache . '/' . md5($content);
+            $limit = time() - self::$cacheLifespan;
+            if (file_exists($cacheFile) && filemtime($cacheFile) > $limit) {
+                return file_get_contents($cacheFile);
+            }
+        }
+
         $lines = explode("\n", $content);
 
         $parser = new MdParser($lines, $writer);
         $parser->parse($values);
 
-        return $writer->getBuffer();
+        $result = $writer->getBuffer();
+
+        if (self::$cache) {
+            assert(isset($cacheFile));
+            file_put_contents($cacheFile, $result);
+        }
+
+        return $result;
     }
+
+
 }

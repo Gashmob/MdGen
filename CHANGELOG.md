@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3
+
+- Add cache system
+
 ## v0.2
 
 - Manage nested values in templates variables
