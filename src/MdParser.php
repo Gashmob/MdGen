@@ -58,6 +58,10 @@ class MdParser
         '/^\[#]: *include *(.+?) *(\{.*})?$/'; // Match on [#]: include <template> { "<key>":<value>, "<key>":<value> }
     const VAR_ = /** @lang PhpRegExp */
         "/\{(.+?)}/"; // Match on {<var>}
+    const FOR_ = /** @lang PhpRegExp */
+        "/^ *\{% for (.+) in (.+) %} *$/"; // Match on {% for <var> in <vars> %}
+    const END_FOR = /** @lang PhpRegExp */
+        "/^ *\{% endfor %} *$/"; // Match on {% endfor %}
 
     /**
      * @var array
@@ -97,14 +101,27 @@ class MdParser
         if ($lines == null) {
             $lines = $this->lines;
         }
+
         for ($i = 0; $i < count($lines); $i++) {
             $line = $lines[$i];
+
+            $matches = [];
 
             if (preg_match(self::USELESS_LINE, $line)) {
                 $lines[$i] = '';
                 continue;
             }
-            $matches = [];
+            if (preg_match(self::FOR_, $line, $matches)) {
+                // Check if var is in values
+                $key = $matches[2];
+                $value = $this->getValue($this->values, $key);
+                if ($value == $key || !is_array($value)) {
+                    throw new ParserStateException("For loop: $key is not an array");
+                }
+                $lines = $this->parseLoop($lines, $i, $matches);
+                $i--;
+                continue;
+            }
             if (preg_match(self::BASE, $line, $matches)) {
                 $lines[$i] = '';
                 if (!file_exists(MdGenEngine::getBasePath() . $matches[1] . '.mdt')) {
@@ -445,6 +462,66 @@ class MdParser
         $this->writer->writeIndent("</blockquote>\n");
 
         return $this->parseInit($line);
+    }
+
+    /**
+     * @param string[] $lines
+     * @param int $idx
+     * @param string[] $matches
+     * @return string[]
+     */
+    private function parseLoop($lines, $idx, $matches)
+    {
+        $level = 0;
+
+        // Add lines before for
+        $result = [];
+        $i = 0;
+        for (; $i < $idx; $i++) {
+            $result[] = $lines[$i];
+        }
+
+        // Get lines into for
+        $to_add = [];
+        for (; $i < count($lines); $i++) {
+            $line = $lines[$i];
+
+            if (preg_match(self::FOR_, $line)) {
+                if (++$level == 1) {
+                    continue;
+                }
+            }
+            if (preg_match(self::END_FOR, $line)) {
+                if (--$level == 0) {
+                    break;
+                }
+            }
+            $to_add[] = $line;
+        }
+
+        // Add lines into for
+        $key = $matches[1];
+        $values = $this->getValue($this->values, $matches[2]);
+        for ($j = 0; $j < count($values); $j++) {
+            $this->values[$key . $j] = $values[$j];
+            for ($k = 0; $k < count($to_add); $k++) {
+                $result[] = preg_replace_callback("/\{($key)(\..*)?}/", function ($matches) use ($key, $j) {
+                    if (isset($matches[2])) {
+                        return '{' . $key . $j . '.' . $matches[2] . '}';
+                    } else {
+                        return '{' . $key . $j . '}';
+                    }
+                }, $to_add[$k]);
+            }
+        }
+
+        // Add lines after for
+        $i++;
+        for (; $i < count($lines); $i++) {
+            $result[] = $lines[$i];
+        }
+
+        return $result;
     }
 
     const ALIGNL = /** @lang PhpRegExp */

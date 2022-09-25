@@ -6,8 +6,8 @@ use Exception;
 
 class ParserStateException extends Exception
 {
-    public function __construct()
+    public function __construct($msg = "Parser state exception", $line = false)
     {
-        parent::__construct("Parser state exception");
+        parent::__construct(!$line ? "$msg" : "$line: $msg");
     }
 }
