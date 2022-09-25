@@ -1,0 +1,6 @@
+{% for i in tab %}
+- {i}
+    {% for j in tab2 %}
+    - {j}
+    {% endfor %} 
+{% endfor %}

@@ -10,16 +10,19 @@ Markdown template engine. This php library will generate html from markdown temp
   - [Special](#special)
     - [Base template](#base-template)
     - [Include template](#include-template)
+    - [Scripting](#scripting)
   - [Generate html](#generate-html)
 - [Installation](#installation)
 
 ## Usage
 
-Let see how to use MdGen. If you want some examples, you can go inside test dir, there is the template with the html result.
+Let see how to use MdGen. If you want some examples, you can go inside test dir, there is the template with the html
+result.
 
 ### Templates format
 
-First, there is all the format that you can use for your template and how it will be translated to html. Essentially it's markdown, but there is some difference :
+First, there is all the format that you can use for your template and how it will be translated to html. Essentially
+it's markdown, but there is some difference :
 
 <table>
 <tr><th>MdGen</th><th>html</th></tr>
@@ -211,6 +214,7 @@ Some text
 <td>
 
 ```html
+
 <ol>
     <li>First item</li>
     <li>Second item</li>
@@ -231,6 +235,7 @@ Some text
 <td>
 
 ```html
+
 <ul>
     <li>First item</li>
     <li>Second item</li>
@@ -250,6 +255,7 @@ Some text
 <td>
 
 ```html
+
 <hr/>
 ```
 
@@ -286,6 +292,7 @@ Write the end of code block without the backslash.
 <td>
 
 ```html
+
 <pre><code class="language-bash">
 echo "Hello world"
 </code></pre>
@@ -304,6 +311,7 @@ echo "Hello world"
 <td>
 
 ```html
+
 <blockquote>
     quote
 </blockquote>
@@ -324,32 +332,33 @@ echo "Hello world"
 <td>
 
 ```html
+
 <table>
     <thead>
-        <tr>
-            <th style="text-align:left;">
-              Col 1
-            </th>
-            <th style="text-align:center;">
-              Col 2
-            </th>
-            <th style="text-align:right;">
-              Col 3
-            </th>
-        </tr>
+    <tr>
+        <th style="text-align:left;">
+            Col 1
+        </th>
+        <th style="text-align:center;">
+            Col 2
+        </th>
+        <th style="text-align:right;">
+            Col 3
+        </th>
+    </tr>
     </thead>
     <tbody>
-        <tr>
-            <td style="text-align:left;">
-              1
-            </td>
-            <td style="text-align:center;">
-              2
-            </td>
-            <td style="text-align:right;">
-              3
-            </td>
-        </tr>
+    <tr>
+        <td style="text-align:left;">
+            1
+        </td>
+        <td style="text-align:center;">
+            2
+        </td>
+        <td style="text-align:right;">
+            3
+        </td>
+    </tr>
     </tbody>
 </table>
 ```
@@ -368,6 +377,7 @@ echo "Hello world"
 <td>
 
 ```html
+
 <div>Some html</div>
 <div># Title</div>
 ```
@@ -402,7 +412,9 @@ $engine->render('myTemplate.mdt', [ "foo" => "bar" ])
 
 But there is some another statements that can be used in your template.
 
-The first of generation is pre-rendering. During these steps the library look at the first lines for a special statement. These lines specify some values that the pre-render function should return. It will not appear in final html document. It works on a key value system :
+The first of generation is pre-rendering. During these steps the library look at the first lines for a special
+statement. These lines specify some values that the pre-render function should return. It will not appear in final html
+document. It works on a key value system :
 
 ```md
 [#]: key -> value
@@ -418,19 +430,22 @@ The pre-render function will then return :
 
 #### Base template
 
-Frequently your templates need the same base in html (same header, same footer, ...). For that you can add this statement at the beginning of your template (after the key-value)
+Frequently your templates need the same base in html (same header, same footer, ...). For that you can add this
+statement at the beginning of your template (after the key-value)
 
 ```md
 [#]: base someTemplate
 ```
 
-The library will then look for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+The library will then look for the file `someTemplate.mdt` from where the template is located. You can override this by
+providing a search path to the library :
 
 ```php
 $engine->basePath('someWhere/');
 ```
 
-In the file `someTemplate.mdt` you can write all you want. You just need to add the statement below to indicate where to include the calling template.
+In the file `someTemplate.mdt` you can write all you want. You just need to add the statement below to indicate where to
+include the calling template.
 
 ```md
 [#]: baseInclude
@@ -446,13 +461,45 @@ You can also include another template in your template. For that you just have t
 [#]: include someTemplate
 ```
 
-It will then look for the file `someTemplate.mdt` from where the template is located. You can override this by providing a search path to the library :
+It will then look for the file `someTemplate.mdt` from where the template is located. You can override this by providing
+a search path to the library :
 
 ```php
 $engine->includePath('someWhere');
 ```
 
-### Generate html 
+Your include template can get some values from the calling template. For that, you just need to add these values after
+the template name :
+
+```md
+[#]: include someTemplate { "foo":"bar", "hello":"world" }
+```
+
+#### Scripting
+
+You can also create conditions and loops. Let's begin with conditions.
+
+```md
+{% if foo == "bar" %}
+The variable foo is equal to bar
+{% else %}
+The variable foo is not equal to bar
+{% endif %}
+```
+
+The statements `{%  %}` needs to have their own line.
+
+And now, loops :
+
+```md
+{% for value in values %}
+- {value}
+{% endfor %}
+```
+
+Like for conditions, loop statements needs to have their own line.
+
+### Generate html
 
 Finally, there is how to use the engine to generate html document from a template file :
 
