@@ -2,6 +2,7 @@
 
 namespace Gashmob\Mdgen;
 
+use Exception;
 use Gashmob\Mdgen\exceptions\FileNotFoundException;
 use Gashmob\Mdgen\exceptions\ParserStateException;
 
@@ -62,6 +63,12 @@ class MdParser
         "/^ *\{% for (.+) in (.+) %} *$/"; // Match on {% for <var> in <vars> %}
     const END_FOR = /** @lang PhpRegExp */
         "/^ *\{% endfor %} *$/"; // Match on {% endfor %}
+    const IF_ = /** @lang PhpRegExp */
+        "/^ *\{% if (.+) %} *$/"; // Match on {% if <condition> %}
+    const ELSE_ = /** @lang PhpRegExp */
+        "/^ *\{% else %} *$/"; // Match on {% else %}
+    const END_IF = /** @lang PhpRegExp */
+        "/^ *\{% endif %} *$/"; // Match on {% endif %}
 
     /**
      * @var array
@@ -119,6 +126,11 @@ class MdParser
                     throw new ParserStateException("For loop: $key is not an array");
                 }
                 $lines = $this->parseLoop($lines, $i, $matches);
+                $i--;
+                continue;
+            }
+            if (preg_match(self::IF_, $line, $matches)) {
+                $lines = $this->parseIf($lines, $i, $matches);
                 $i--;
                 continue;
             }
@@ -522,6 +534,95 @@ class MdParser
         }
 
         return $result;
+    }
+
+    /**
+     * @param string[] $lines
+     * @param int $idx
+     * @param string[] $matches
+     * @return string[]
+     */
+    private function parseIf($lines, $idx, $matches)
+    {
+        $result = [];
+
+        // Add lines before if
+        $i = 0;
+        for (; $i < $idx; $i++) {
+            $result[] = $lines[$i];
+        }
+
+        // Get lines into if and else
+        $if_ = [];
+        $else_ = [];
+        $level = 0;
+        $else = false;
+        for (; $i < count($lines); $i++) {
+            $line = $lines[$i];
+
+            if (preg_match(self::IF_, $line)) {
+                if (++$level == 1) {
+                    continue;
+                }
+            }
+            if (preg_match(self::ELSE_, $line)) {
+                if ($level == 1) {
+                    $else = true;
+                    continue;
+                }
+            }
+            if (preg_match(self::END_IF, $line)) {
+                if (--$level == 0) {
+                    break;
+                }
+            }
+
+            if ($else) {
+                $else_[] = $line;
+            } else {
+                $if_[] = $line;
+            }
+        }
+
+        // Evaluate condition
+        if ($this->evaluateCondition($matches[1])) {
+            $result = array_merge($result, $if_);
+        } else {
+            $result = array_merge($result, $else_);
+        }
+
+        // Add lines after if
+        $i++;
+        for (; $i < count($lines); $i++) {
+            $result[] = $lines[$i];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $condition
+     * @return bool
+     */
+    private function evaluateCondition($condition)
+    {
+        $cond = preg_replace_callback("/((['\"]?)[a-zA-Z][a-zA-Z0-9_\-]*(\.[^ ]*)*(['\"]?))/", function ($matches) {
+            $len = strlen($matches[2]);
+            if ($len == 0) {
+                $var_ = $matches[1];
+            } else {
+                $var_ = substr($matches[1], $len, -$len);
+            }
+            $value = $this->parseValue($this->getValue($this->values, $var_));
+            if (is_string($value)) {
+                return "'" . $value . "'";
+            } else {
+                return $value;
+            }
+        }, $condition);
+
+        eval('$cond = ' . $cond . ';');
+        return $cond;
     }
 
     const ALIGNL = /** @lang PhpRegExp */
