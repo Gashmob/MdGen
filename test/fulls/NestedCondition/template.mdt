@@ -1,0 +1,8 @@
+{% if foo == 'bar' %}
+Foo is equal to bar
+{% if hello == 'world' %}
+And hello is equal to world
+{% else %}
+And hello is not equal to world
+{% endif %}
+{% endif %}
