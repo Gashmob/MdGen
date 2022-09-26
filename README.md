@@ -488,7 +488,7 @@ The variable foo is not equal to bar
 {% endif %}
 ```
 
-The statements `{%  %}` needs to have their own line.
+The statements `{%  %}` needs to have their own line. Conditions work like in php.
 
 And now, loops :
 

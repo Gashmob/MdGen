@@ -3,6 +3,7 @@
 ## v0.3
 
 - Add cache system
+- Add script language for make conditions
 
 ## v0.2
 
