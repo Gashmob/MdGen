@@ -606,8 +606,7 @@ class MdParser
      */
     private function evaluateCondition($condition)
     {
-        $dump = [];
-        $cond = preg_replace_callback("/((['\"]?)[a-zA-Z][a-zA-Z0-9_\-]*(\.[^ ]*)*(['\"]?))/", function ($matches) use (&$dump) {
+        $cond = preg_replace_callback("/((['\"]?)[a-zA-Z][a-zA-Z0-9_\-]*(\.[^ ]*)*(['\"]?))/", function ($matches) {
             $len = strlen($matches[2]);
             if ($len == 0) {
                 $var_ = $matches[1];
