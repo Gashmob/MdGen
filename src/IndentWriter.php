@@ -30,6 +30,7 @@ class IndentWriter
     public function __construct($indentChar = "\t")
     {
         $this->indentChar = $indentChar;
+        $this->buffer = "";
     }
 
     public function indent()
