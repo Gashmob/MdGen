@@ -172,6 +172,7 @@ class MdParser
             $line = rtrim($line);
 
             if (preg_match(self::BASE_INCLUDE, $line)) {
+                $includeLines = $this->parseScript($includeLines);
                 foreach ($includeLines as $includeLine) {
                     $state = $this->parseLine($state, $includeLine);
                 }
@@ -295,11 +296,7 @@ class MdParser
 
         // If no match, use parseInLine (if line is not empty)
         if ($line != '') {
-            if (preg_match('/^<[a-z]+.*?>.*<\/[a-z]+>/', $line)) {
-                $this->writer->writeIndent($this->parseInLine($line));
-            } else {
-                $this->writer->writeIndent("<p>" . $this->parseInLine($line, false) . "</p>\n");
-            }
+            $this->writer->writeIndent($this->parseInLine($line));
         }
 
         return new EngineState();
@@ -517,7 +514,7 @@ class MdParser
         for ($j = 0; $j < count($values); $j++) {
             $this->values[$key . $j] = $values[$j];
             for ($k = 0; $k < count($to_add); $k++) {
-                $result[] = preg_replace_callback("/\{($key)(\..*)?}/", function ($matches) use ($key, $j) {
+                $result[] = preg_replace_callback("/\{($key)(\..*)?}/", function ($matches) use ($key, $j) { // FIXME: [#] include { "...":... }
                     if (isset($matches[2])) {
                         return '{' . $key . $j . '.' . $matches[2] . '}';
                     } else {

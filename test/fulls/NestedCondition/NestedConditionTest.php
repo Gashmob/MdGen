@@ -21,6 +21,6 @@ class NestedConditionTest implements Test
             'hello' => 'world!',
         ]);
 
-        return $html == "<p>Foo is equal to bar</p>\n<p>And hello is not equal to world</p>\n";
+        return $html == "Foo is equal to bar\nAnd hello is not equal to world\n";
     }
 }

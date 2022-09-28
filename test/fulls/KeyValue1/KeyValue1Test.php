@@ -20,6 +20,6 @@ class KeyValue1Test implements Test
         $values = $engine->preRender($template);
         $html = $engine->render($template, $values);
 
-        return $html == "<p>bar</p>\n";
+        return $html == "bar\n";
     }
 }
