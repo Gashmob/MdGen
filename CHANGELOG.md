@@ -3,7 +3,8 @@
 ## v1.0
 
 - Fix buffer initialization for IndentWriter
-- Don't add <p> tag automatically, user must add it manually
+- Don't add `<p>` tag automatically, user must add it manually
+- Fix some bugs with includes, loops and conditions
 
 ## v0.3
 
