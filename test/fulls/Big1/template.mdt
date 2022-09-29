@@ -1,0 +1,9 @@
+[#]: base base
+
+{% if nbArticles > 0 %}
+    {% for a in articles %}
+        [#]: include article { "title": a.title }
+    {% endfor %}
+{% else %}
+    <li>No articles found.</li>
+{% endif %}
