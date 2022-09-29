@@ -20,6 +20,6 @@ class Include2Test implements Test
         $template = __DIR__ . '/template.mdt';
         $html = $engine->render($template);
 
-        return $html == "<p>Just after, we will have some values</p>\n<p>The 2 values are bar and 42.</p>\n<p>Just before, we have some values</p>\n";
+        return $html == "Just after, we will have some values\nThe 2 values are bar and 42.\nJust before, we have some values\n";
     }
 }

@@ -56,7 +56,7 @@ class MdParser
     const BASE_INCLUDE = /** @lang PhpRegExp */
         "/^\[#]: *baseInclude *$/"; // Match on [#]: baseInclude
     const INCLUDE_ = /** @lang PhpRegExp */
-        '/^\[#]: *include *(.+?) *(\{.*})?$/'; // Match on [#]: include <template> { "<key>":<value>, "<key>":<value> }
+        '/^ *\[#]: *include *(.+?) *(\{.*})? *$/'; // Match on [#]: include <template> { "<key>":<value>, "<key>":<value> }
     const VAR_ = /** @lang PhpRegExp */
         "/\{(.+?)}/"; // Match on {<var>}
     const FOR_ = /** @lang PhpRegExp */
@@ -100,10 +100,11 @@ class MdParser
 
     /**
      * @param array $lines
+     * @param array $values
      * @return array
      * @throws FileNotFoundException|ParserStateException
      */
-    private function parseScript($lines = null)
+    private function parseScript($lines = null, $values = [])
     {
         if ($lines == null) {
             $lines = $this->lines;
@@ -121,7 +122,7 @@ class MdParser
             if (preg_match(self::FOR_, $line, $matches)) {
                 // Check if var is in values
                 $key = $matches[2];
-                $value = $this->getValue($this->values, $key);
+                $value = $this->getValue(array_merge($this->values, $values), $key);
                 if ($value == $key || !is_array($value)) {
                     throw new ParserStateException("For loop: $key is not an array");
                 }
@@ -142,12 +143,25 @@ class MdParser
                 $this->parseBase($matches[1] . '.mdt', $lines);
                 return [];
             }
+            if (preg_match(self::INCLUDE_, $line, $matches)) {
+                if (!file_exists(MdGenEngine::getIncludePath() . $matches[1] . '.mdt')) {
+                    throw new FileNotFoundException(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
+                }
+                $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
+                $includeLines = explode("\n", $content);
+                $includeValues = count($matches) > 2 ?
+                    $this->getIncludeValues(trim(substr($matches[2], 1, -1)), array_merge($this->values, $values)) :
+                    [];
+                $includeLines = $this->parseScript($includeLines, array_merge(array_merge($this->values, $values), $includeValues));
+                array_splice($lines, $i, 1, $includeLines);
+                continue;
+            }
 
-            $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) use ($line) {
+            $lines[$i] = preg_replace_callback(self::VAR_, function ($matches) use ($line, $values) {
                 if (preg_match(self::INCLUDE_, $line)) {
                     return '{' . $matches[1] . '}';
                 }
-                return $this->parseValue($this->getValue($this->values, $matches[1]));
+                return $this->parseValue($this->getValue(array_merge($this->values, $values), $matches[1]));
             }, $line);
         }
 
@@ -172,6 +186,7 @@ class MdParser
             $line = rtrim($line);
 
             if (preg_match(self::BASE_INCLUDE, $line)) {
+                $includeLines = $this->parseScript($includeLines);
                 foreach ($includeLines as $includeLine) {
                     $state = $this->parseLine($state, $includeLine);
                 }
@@ -280,26 +295,9 @@ class MdParser
             return new EngineState(EngineState::TABLE, -1, $line);
         }
 
-        if (preg_match(self::INCLUDE_, $line, $matches)) {
-            if (!file_exists(MdGenEngine::getIncludePath() . $matches[1] . '.mdt')) {
-                throw new FileNotFoundException(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
-            }
-            $content = file_get_contents(MdGenEngine::getIncludePath() . $matches[1] . '.mdt');
-            $lines = explode("\n", $content);
-            $parser = new MdParser($lines, $this->writer);
-            $includeValues = count($matches) > 2 ? $this->getIncludeValues(trim(substr($matches[2], 1, -1)), $this->values) : [];
-            $parser->parse(array_merge($this->values, $includeValues));
-
-            return new EngineState();
-        }
-
         // If no match, use parseInLine (if line is not empty)
         if ($line != '') {
-            if (preg_match('/^<[a-z]+.*?>.*<\/[a-z]+>/', $line)) {
-                $this->writer->writeIndent($this->parseInLine($line));
-            } else {
-                $this->writer->writeIndent("<p>" . $this->parseInLine($line, false) . "</p>\n");
-            }
+            $this->writer->writeIndent($this->parseInLine($line));
         }
 
         return new EngineState();
@@ -517,13 +515,24 @@ class MdParser
         for ($j = 0; $j < count($values); $j++) {
             $this->values[$key . $j] = $values[$j];
             for ($k = 0; $k < count($to_add); $k++) {
-                $result[] = preg_replace_callback("/\{($key)(\..*)?}/", function ($matches) use ($key, $j) {
+                $line = preg_replace_callback("/\{($key)(\..*)?}/", function ($matches) use ($key, $j) {
                     if (isset($matches[2])) {
                         return '{' . $key . $j . '.' . $matches[2] . '}';
                     } else {
                         return '{' . $key . $j . '}';
                     }
                 }, $to_add[$k]);
+                if (preg_match(self::INCLUDE_, $line)) {
+                    $line = preg_replace_callback("/:[^\"]($key)(\.[^ }]*)?[^\"]/", function ($matches) use ($key, $j) {
+                        if (isset($matches[2])) {
+                            return ':' . $key . $j . $matches[2];
+                        } else {
+                            return ':' . $key . $j;
+                        }
+                    }, $line);
+                }
+
+                $result[] = $line;
             }
         }
 

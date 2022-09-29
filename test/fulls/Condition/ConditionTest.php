@@ -23,6 +23,6 @@ class ConditionTest implements Test
             'foo' => 'baz',
         ]);
 
-        return $html1 == "<p>a</p>\n" && $html2 == "<p>b</p>\n";
+        return $html1 == "a\n" && $html2 == "b\n";
     }
 }

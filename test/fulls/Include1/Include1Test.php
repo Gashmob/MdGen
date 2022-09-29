@@ -20,6 +20,6 @@ class Include1Test implements Test
         $template = __DIR__ . '/template.mdt';
         $html = $engine->render($template);
 
-        return $html == "<p>Just after, we will have a lorem ipsum</p>\n<p>Lorem ipsum dolor sit amet...</p>\n<p>Just before, we have a lorem ipsum</p>\n";
+        return $html == "Just after, we will have a lorem ipsum\nLorem ipsum dolor sit amet...\nJust before, we have a lorem ipsum\n";
     }
 }

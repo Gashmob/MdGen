@@ -20,6 +20,6 @@ class Base1Test implements Test
         $template = __DIR__ . '/template.mdt';
         $html = $engine->render($template);
 
-        return $html == "<ul>\n    <li>\n        Here is a link :\n    </li>\n</ul>\n<p><a href=\"https://www.google.com\">Google</a></p>\n<ul>\n    <li>\n        And another link :\n    </li>\n</ul>\n<p><a href=\"https://github.com\">Github</a></p>\n";
+        return $html == "<ul>\n    <li>\n        Here is a link :\n    </li>\n</ul>\n<a href=\"https://www.google.com\">Google</a>\n<ul>\n    <li>\n        And another link :\n    </li>\n</ul>\n<a href=\"https://github.com\">Github</a>\n";
     }
 }

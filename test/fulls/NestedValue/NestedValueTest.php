@@ -24,6 +24,6 @@ class NestedValueTest implements Test
             "A" => new A("Hello World!")
         ]);
 
-        return $html == "<p>This is the value of foo.bar : 42</p>\n<p>And I want to say Hello World!</p>\n";
+        return $html == "This is the value of foo.bar : 42\nAnd I want to say Hello World!\n";
     }
 }
