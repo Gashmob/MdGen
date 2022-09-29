@@ -134,7 +134,7 @@ Some text
 <td>
 
 ```html
-<p>Some text</p>
+Some text
 ```
 
 </td>
